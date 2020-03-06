@@ -18,7 +18,7 @@
 					<folderInfo id="cdt.managedbuild.config.gnu.exe.release.1131331429." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.exe.release.2117457207" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.exe.release">
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.exe.release.42221137" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.release"/>
-							<builder buildPath="${workspace_loc:/ComponentWebotsPioneer3DX}/smartsoft/build" id="cdt.managedbuild.config.gnu.exe.release.1131331429" keepEnvironmentInBuildfile="false" name="SmartMDSD Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="org.smartmdsd.utils.smartmdsd.builder"/>
+							<builder buildPath="${workspace_loc:/ComponentWebotsRobot}/smartsoft/build" id="cdt.managedbuild.config.gnu.exe.release.1131331429" keepEnvironmentInBuildfile="false" name="SmartMDSD Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="org.smartmdsd.utils.smartmdsd.builder"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.1838727149" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.668270929" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release">
 								<option id="gnu.cpp.compiler.exe.release.option.optimization.level.1359928007" name="Optimization Level" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
@@ -29,8 +29,8 @@
 									<listOptionValue builtIn="false" value="&quot;${SMART_ROOT_ACE}/include/SmartSoft_CD_API&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMART_ROOT_ACE}/include/AceSmartSoftKernel&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMART_ROOT_ACE}/include/AceSmartSoftKernel/middlewareMapping&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentWebotsPioneer3DX/smartsoft/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentWebotsPioneer3DX/smartsoft/src-gen}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentWebotsRobot/smartsoft/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentWebotsRobot/smartsoft/src-gen}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.326512911" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -72,7 +72,7 @@
 					<folderInfo id="cdt.managedbuild.config.gnu.exe.debug.96144372." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.exe.debug.1049885536" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.exe.debug">
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.exe.debug.767751978" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.debug"/>
-							<builder buildPath="${workspace_loc:/ComponentWebotsPioneer3DX}/smartsoft/build" id="cdt.managedbuild.config.gnu.exe.debug.96144372" keepEnvironmentInBuildfile="false" name="SmartMDSD Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="org.smartmdsd.utils.smartmdsd.builder"/>
+							<builder buildPath="${workspace_loc:/ComponentWebotsRobot}/smartsoft/build" id="cdt.managedbuild.config.gnu.exe.debug.96144372" keepEnvironmentInBuildfile="false" name="SmartMDSD Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="org.smartmdsd.utils.smartmdsd.builder"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.805531759" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1168136313" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug">
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.1206718758" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
@@ -83,8 +83,8 @@
 									<listOptionValue builtIn="false" value="&quot;${SMART_ROOT_ACE}/include/SmartSoft_CD_API&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMART_ROOT_ACE}/include/AceSmartSoftKernel&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMART_ROOT_ACE}/include/AceSmartSoftKernel/middlewareMapping&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentWebotsPioneer3DX/smartsoft/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentWebotsPioneer3DX/smartsoft/src-gen}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentWebotsRobot/smartsoft/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentWebotsRobot/smartsoft/src-gen}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.284871177" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -111,7 +111,7 @@
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="ComponentWebotsPioneer3DX.cdt.managedbuild.target.gnu.exe.1345429191" name="Executable" projectType="cdt.managedbuild.target.gnu.exe"/>
+		<project id="ComponentWebotsRobot.cdt.managedbuild.target.gnu.exe.1345429191" name="Executable" projectType="cdt.managedbuild.target.gnu.exe"/>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>

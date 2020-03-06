@@ -12,25 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef _COMPONENTWEBOTSROBOTINO3CORE_HH
-#define _COMPONENTWEBOTSROBOTINO3CORE_HH
+#ifndef _COMPONENTWEBOTSROBOTCORE_HH
+#define _COMPONENTWEBOTSROBOTCORE_HH
 
 #include "aceSmartSoft.hh"
 
 #include <iostream>
 
+#include <jsoncpp/json/json.h>
+
 #include <webots/Robot.hpp>
 
-class ComponentWebotsRobotino3Core
+class ComponentWebotsRobotCore
 {
 private:
 public:
-  ComponentWebotsRobotino3Core();
-  SmartACE::SmartMutex Robotino3Mutex;
-  double vX;
-  double vY;
-  double vW;
-  webots::Robot *webotsRobot;
+  ComponentWebotsRobotCore();
+  SmartACE::SmartMutex mRobotMutex;
+  double mVX;
+  double mVY;
+  double mOmega;
+  Json::Value mConfiguration;
+  webots::Robot *mWebotsRobot;
 };
 
 #endif

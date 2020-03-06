@@ -1,8 +1,8 @@
-ComponentDefinition ComponentWebotsPioneer3DX logo "/ComponentWebotsPioneer3DX/model/logo.png"
+ComponentDefinition ComponentWebotsRobot logo "/ComponentWebotsRobot/model/logo.png"
 {
   Activity BatteryEventTask {
   }
-  Activity Pioneer3DXTask {
+  Activity RobotTask {
     InputPortLink NavigationVelocityServiceIn {
       oversamplingOk undersamplingOk
     }
@@ -16,7 +16,7 @@ ComponentDefinition ComponentWebotsPioneer3DX logo "/ComponentWebotsPioneer3DX/m
   }
   InputHandler NavigationVelocityHandler triggeredFrom NavigationVelocityServiceIn {
   }
-  OutputPort BaseStateServiceOut implements CommBasicObjects.BaseStateService realizedBy Pioneer3DXTask {
+  OutputPort BaseStateServiceOut implements CommBasicObjects.BaseStateService realizedBy RobotTask {
   }
   OutputPort BatteryEventServiceOut implements CommNavigationObjects.BatteryEventService realizedBy BatteryEventTask {
   }
@@ -27,5 +27,5 @@ ComponentDefinition ComponentWebotsPioneer3DX logo "/ComponentWebotsPioneer3DX/m
   CoordinationSlavePort CoordinationPort implements CommBasicObjects.DefaultCoordinationService {
   }
 
-  ComponentParameters ComponentWebotsPioneer3DXParams slave CoordinationPort;
+  ComponentParameters ComponentWebotsRobotParams slave CoordinationPort;
 }
