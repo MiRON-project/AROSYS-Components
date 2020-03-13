@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>ComponentWebotsRobotino3</name>
+	<name>ComponentWebotsRobot</name>
 	<comment></comment>
 	<projects>
 		<project>CommBasicObjects</project>
