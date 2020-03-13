@@ -4,9 +4,8 @@ FIND_FILE(SMART_MACROS SmartMacros2.cmake PATHS $ENV{SMART_ROOT_ACE}/CMakeMacros
 INCLUDE(${SMART_MACROS})
 INCLUDE_DIRECTORIES(${WEBOTS_HOME}/src)
 
+SMART_ADD_PACKAGE(ComponentWebots)
 SMART_ADD_PACKAGE(ComponentWebotsBumper)
 SMART_ADD_PACKAGE(ComponentWebotsLidar)
-SMART_ADD_PACKAGE(ComponentWebotsPioneer3DX)
-SMART_ADD_PACKAGE(ComponentWebotsRobotino3)
-SMART_ADD_PACKAGE(ComponentWebotsTIAGo)
+SMART_ADD_PACKAGE(ComponentWebotsRobot)
 
