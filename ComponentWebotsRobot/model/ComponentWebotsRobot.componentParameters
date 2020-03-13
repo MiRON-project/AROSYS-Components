@@ -1,3 +1,19 @@
 ComponentParameter ComponentWebotsRobotParams component ComponentWebotsRobot
 {
+	InternalParameter battery_properties{
+		//@doc"Defines the initial battery level."
+		battery_level_init: Double = 100
+		
+		//@doc"Defines the max battery level."
+		battery_level_max: Double = 100
+		
+		//@doc"Defines the min battery level to stop robot."
+		battery_level_min: Double = 0
+		
+		//@doc"Defines the discharge battery rate."
+		cpu_consumption: Double = 0.5
+		
+		//@doc"Defines the motor consumption"
+		motor_consumption: Double = 1
+	}
 }

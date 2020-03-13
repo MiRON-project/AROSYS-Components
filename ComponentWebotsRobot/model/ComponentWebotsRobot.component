@@ -18,9 +18,8 @@ ComponentDefinition ComponentWebotsRobot logo "/ComponentWebotsRobot/model/logo.
   }
   OutputPort BaseStateServiceOut implements CommBasicObjects.BaseStateService realizedBy RobotTask {
   }
-  OutputPort BatteryEventServiceOut implements CommNavigationObjects.BatteryEventService realizedBy BatteryEventTask {
-  }
-  AnswerPort BaseStateAnswerer implements CommBasicObjects.BaseStateQueryService {
+
+	AnswerPort BaseStateAnswerer implements CommBasicObjects.BaseStateQueryService {
   }
   RequestHandler BaseStateQueryHandler triggeredFrom BaseStateAnswerer {
   }
@@ -28,4 +27,6 @@ ComponentDefinition ComponentWebotsRobot logo "/ComponentWebotsRobot/model/logo.
   }
 
   ComponentParameters ComponentWebotsRobotParams slave CoordinationPort;
+OutputPort BatteryPushServiceOut implements CommBasicObjects.BatteryPushService realizedBy BatteryEventTask {
+	}
 }
