@@ -17,6 +17,7 @@
 #include "BatteryEventTask.hh"
 #include "ComponentWebotsRobot.hh"
 #include "CommBasicObjects/CommBatteryLevel.hh"
+#include "CommBasicObjects/CommTimeStamp.hh"
 
 #include <iostream>
 
@@ -43,9 +44,17 @@ int BatteryEventTask::on_execute()
 	COMP->mRobotMutex.acquire();
 
 	CommBasicObjects::CommBatteryLevel bt_level;
+	CommBasicObjects::CommTimeStamp timestamp;
+	
 
-	auto current_sample_time = std::chrono::system_clock::now();
-	auto milliseconds = (double) std::chrono::duration_cast<std::chrono::milliseconds>(current_sample_time - last_sample_time).count();
+	std::chrono::system_clock::time_point current_sample_time = 
+		std::chrono::system_clock::now();
+	
+	timestamp.set(timepointToTimeval(current_sample_time));
+	bt_level.setTimeStamp(timestamp);
+
+	auto milliseconds = (double) std::chrono::duration_cast
+		<std::chrono::milliseconds>(current_sample_time - last_sample_time).count();
 	auto seconds = milliseconds / 1000.0;
 	last_sample_time = current_sample_time;
 
@@ -53,9 +62,11 @@ int BatteryEventTask::on_execute()
 	{
 		std::cout << "Battery Level is: " << battery_level << std::endl;
 		bt_level.setChargeLevel(0);
+		COMP->battery_out = true;
 	}
 	else
 	{
+		COMP->battery_out = false;
 		if(abs(COMP->mVX) > 0 || abs(COMP->mVY) > 0 || abs(COMP->mOmega) > 0)
 			battery_level = std::max(0.0, battery_level- seconds * COMP->getGlobalState().getBattery_properties().getMotor_consumption());
 
@@ -72,4 +83,15 @@ int BatteryEventTask::on_exit()
 {
 	// use this method to clean-up resources which are initialized in on_entry() and needs to be freed before the on_execute() can be called again
 	return 0;
+}
+
+timeval BatteryEventTask::timepointToTimeval(
+	std::chrono::system_clock::time_point tp) const
+{
+	auto secs = std::chrono::time_point_cast<std::chrono::seconds>(tp);
+    auto ms = std::chrono::time_point_cast<std::chrono::microseconds>(tp) -
+		std::chrono::time_point_cast<std::chrono::microseconds>(secs);
+    timeval t = timeval{secs.time_since_epoch().count(), 
+		ms.count()};
+	return t;
 }

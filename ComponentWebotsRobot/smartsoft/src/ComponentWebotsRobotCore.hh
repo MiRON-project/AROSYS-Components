@@ -34,6 +34,7 @@ public:
   double mOmega;
   Json::Value mConfiguration;
   webots::Robot *mWebotsRobot;
+  bool battery_out;
 };
 
 #endif

@@ -13,7 +13,7 @@ ComponentParameter ComponentWebotsRobotParams component ComponentWebotsRobot
 		//@doc"Defines the discharge battery rate."
 		cpu_consumption: Double = 0.5
 		
-		//@doc"Defines the motor consumption"
+		//@doc"Defines the motor consumption Factor"
 		motor_consumption: Double = 1
 	}
 }

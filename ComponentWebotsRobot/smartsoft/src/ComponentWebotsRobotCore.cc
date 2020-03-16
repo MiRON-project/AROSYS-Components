@@ -50,4 +50,5 @@ ComponentWebotsRobotCore::ComponentWebotsRobotCore()
 
   // create Robot instance
   mWebotsRobot = new webots::Robot();
+  battery_out = false;
 }

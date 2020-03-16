@@ -25,7 +25,9 @@ class BatteryEventTask  : public BatteryEventTaskCore
 {
 private:
 	double battery_level;
-	 std::chrono::time_point<std::chrono::system_clock> last_sample_time;
+	std::chrono::time_point<std::chrono::system_clock> last_sample_time;
+	timeval timepointToTimeval(std::chrono::system_clock::time_point tp) const;
+	double computeMotorConsumption() const;
 
 public:
 	BatteryEventTask(SmartACE::SmartComponent *comp);
