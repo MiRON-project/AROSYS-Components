@@ -94,7 +94,7 @@ int BatteryEventTask::on_execute()
 	else
 		battery_level = COMP->_supervisor->batterySensorGetValue();
 
-	std::cout << "Battery Level is: " << battery_level << std::endl;
+	//std::cout << "Battery Level is: " << battery_level << std::endl;
 	bt_level.setChargeLevel((int)battery_level);
 	
 	COMP->batteryPushServiceOut->put(bt_level);
@@ -145,15 +145,18 @@ void BatteryEventTask::computeCustomConsumption(double seconds)
 
 void BatteryEventTask::getCharges()
 {
-	webots::Node* root = COMP->_supervisor->getRoot();
-	auto children = root->getField("children");
-	size_t number_of_nodes = children->getCount();
-  	for (size_t i = 0; i < number_of_nodes; ++i) 
+	if (COMP->has_supervisor)
 	{
-    	auto node = children->getMFNode(i);
-		if(node->getType()==WbNodeType::WB_NODE_CHARGER)
-			chargers.push_back(node);
-  	}
+		webots::Node* root = COMP->_supervisor->getRoot();
+		auto children = root->getField("children");
+		size_t number_of_nodes = children->getCount();
+		for (size_t i = 0; i < number_of_nodes; ++i) 
+		{
+			auto node = children->getMFNode(i);
+			if(node->getType()==WbNodeType::WB_NODE_CHARGER)
+				chargers.push_back(node);
+		}
+	}
 }
 
 std::array<double, 3> BatteryEventTask::getRobotPosition() const
@@ -174,7 +177,7 @@ bool BatteryEventTask::checkChargerRange(
 	const double x2 = pow(robot_position[0] - charger_position[0], 2);
 	const double y2 = pow(robot_position[1] - charger_position[1], 2);
 	auto radius = charger->getField("radius")->getSFFloat();
-	std::cout << "distance: " << sqrt(x2 + y2) << "\n";
+	//std::cout << "distance: " << sqrt(x2 + y2) << "\n";
 	return (sqrt(x2 + y2) <= radius);
 }
 
