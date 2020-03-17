@@ -18,8 +18,6 @@
 
 #include <iostream>
 
-#define SECOND_TO_MILLISECONDS 1000.0  // conversion factor
-
 RobotTask::RobotTask(SmartACE::SmartComponent *comp) :
   RobotTaskCore(comp),
   mThread(),
@@ -45,50 +43,17 @@ void set_velocity_in_bound(webots::Motor *motor, double velocity)
 
 int RobotTask::on_entry()
 {
-  if (!COMP->mWebotsRobot)
+  if (!COMP->_supervisor)
     return -1;
 
   // acquisition
   COMP->mRobotMutex.acquire();
 
-  // get timestep from the world and match the one in SmartMDSD component
-  webotsTimeStep = COMP->mWebotsRobot->getBasicTimeStep();
-  int coeff = SECOND_TO_MILLISECONDS / (webotsTimeStep * COMP->connections.robotTask.periodicActFreq);
-  webotsTimeStep *= coeff;
-
-  // set GPS and IMU
-  mWebotsGPS = NULL;
-  mWebotsInertialUnit = NULL;
-  webots::Device *webotsDevice = NULL;
-
-  for (int i = 0; i < COMP->mWebotsRobot->getNumberOfDevices(); i++)
-  {
-    webotsDevice = COMP->mWebotsRobot->getDeviceByIndex(i);
-
-    if (webotsDevice->getNodeType() == webots::Node::GPS)
-    {
-      mWebotsGPS = COMP->mWebotsRobot->getGPS(webotsDevice->getName());
-      std::cout << "Device #" << i << " called " << webotsDevice->getName() << " is a GPS." << std::endl;
-    }
-    if (webotsDevice->getNodeType() == webots::Node::INERTIAL_UNIT)
-    {
-      mWebotsInertialUnit = COMP->mWebotsRobot->getInertialUnit(webotsDevice->getName());
-      std::cout << "Device #" << i << " called " << webotsDevice->getName() << " is an InertialUnit." << std::endl;
-    }
-    if (mWebotsGPS && mWebotsInertialUnit)
-      break;
-  }
-
-  // enable GPS and IMU if found
-  if (mWebotsGPS)
-    mWebotsGPS->enable(webotsTimeStep);
-  else
-    std::cerr << "No GPS found, data sent to `baseStateServiceOut` will be (0,0,0)." << std::endl;
-
-  if (mWebotsInertialUnit)
-    mWebotsInertialUnit->enable(webotsTimeStep);
-  else
-    std::cerr << "No InertialUnit found, data sent to `baseStateServiceOut` will be (0,0,0)." << std::endl;
+  computeWebotsTimestep();
+  if (COMP->_gps)
+    COMP->_gps->enable(webotsTimeStep);
+  if (COMP->_imu)
+    COMP->_imu->enable(webotsTimeStep);
 
   // get the required motor for the navigation according to the configuration file
   if (COMP->mConfiguration.isMember("navigationVelocity") && COMP->mConfiguration["navigationVelocity"].isObject())
@@ -97,7 +62,7 @@ int RobotTask::on_entry()
     const Json::Value::Members motorNames = velocityConfiguration.getMemberNames();
     for (int i = 0; i < motorNames.size(); ++i)
     {
-      webots::Motor *motor = COMP->mWebotsRobot->getMotor(motorNames[i]);
+      webots::Motor *motor = COMP->_supervisor->getMotor(motorNames[i]);
       if (motor)
       {
         motor->setPosition(INFINITY);
@@ -120,7 +85,7 @@ int RobotTask::on_execute()
   if (mWebotsShouldQuit)
     return -1;
 
-  if (mThreadRunning || !COMP->mWebotsRobot)
+  if (mThreadRunning || !COMP->_supervisor)
     return 0;
 
   double speed = 0.0;
@@ -134,19 +99,13 @@ int RobotTask::on_execute()
   COMP->mRobotMutex.acquire();
 
   // set GPS values for port BaseStateServiceOut
-  if (mWebotsGPS)
+  if (COMP->_gps)
   {
-    const double *GPS_value = mWebotsGPS->getValues();
+    auto GPS_value = COMP->_gps->getValues();
     basePosition.set_x(GPS_value[2], 1.0);
     basePosition.set_y(GPS_value[0], 1.0);
     basePosition.set_z(GPS_value[1], 1.0);
     baseState.set_base_position(basePosition);
-
-    // print data to debug
-    // std::cout << " " << std::endl;
-    // std::cout << "GPS_x : " << GPS_value[2]<< std::endl;
-    // std::cout << "GPS_y : " << GPS_value[0]<< std::endl;
-    // std::cout << "GPS_z : " << GPS_value[1]<< std::endl;
   }
   else
   {
@@ -161,19 +120,13 @@ int RobotTask::on_execute()
   // Smartsoft use ???, see ???
   // ROS use ENU convention, https://www.ros.org/reps/rep-0103.html
   // Be aware of this in your calculation
-  if (mWebotsInertialUnit)
+  if (COMP->_imu)
   {
-    const double *inertialInutValue = mWebotsInertialUnit->getRollPitchYaw();
+    auto inertialInutValue = COMP->_imu->getRollPitchYaw();
     basePosition.set_base_roll(inertialInutValue[0]);
     basePosition.set_base_azimuth(inertialInutValue[2]);
     basePosition.set_base_elevation(inertialInutValue[1]);
     baseState.set_base_position(basePosition);
-
-    // print data to debug
-    // std::cout << " " << std::endl;
-    // std::cout << "InertialUnit roll  : " << inertialInutValue[0]<< std::endl;
-    // std::cout << "InertialUnit pitch : " << inertialInutValue[1]<< std::endl;
-    // std::cout << "InertialUnit yaw   : " << inertialInutValue[2] << std::endl;
   }
   else
   {
@@ -184,21 +137,24 @@ int RobotTask::on_execute()
   }
 
   // Pass values to motors in Webots side
-  for (std::map<std::string, webots::Motor *>::iterator it = mWebotsNavigationMotors.begin();
-       it != mWebotsNavigationMotors.end(); ++it)
+  for (std::map<std::string, webots::Motor *>::iterator it = 
+        mWebotsNavigationMotors.begin();
+      it != mWebotsNavigationMotors.end(); ++it)
   {
     const std::string name = it->first;
     const Json::Value coefficients = COMP->mConfiguration["navigationVelocity"][name];
-    if (!coefficients.isArray() || coefficients.size() != 3 || !coefficients[0].isDouble() || !coefficients[1].isDouble() ||
+    if (!coefficients.isArray() || coefficients.size() != 3 || 
+        !coefficients[0].isDouble() || !coefficients[1].isDouble() ||
         !coefficients[2].isDouble())
     {
-      std::cerr << "Wrong value for the 'navigationVelocity." << name << "' key, the value should be a array of 3 doubles."
-                << std::endl;
+      std::cerr << "Wrong value for the 'navigationVelocity." << name << 
+        "' key, the value should be a array of 3 doubles." << std::endl;
       break;
     }
     webots::Motor *motor = it->second;
-    set_velocity_in_bound(motor, COMP->mVX * coefficients[0].asDouble() + COMP->mVY * coefficients[1].asDouble() +
-                                   COMP->mOmega * coefficients[2].asDouble());
+    set_velocity_in_bound(motor, COMP->mVX * coefficients[0].asDouble() + 
+      COMP->mVY * coefficients[1].asDouble() + 
+      COMP->mOmega * coefficients[2].asDouble());
   }
 
   // send baseState update to the port
@@ -208,7 +164,7 @@ int RobotTask::on_execute()
   mThreadRunning = true;
   if (mThread.joinable())
     mThread.join();
-  mThread = std::thread(&RobotTask::runStep, this, COMP->mWebotsRobot);
+  mThread = std::thread(&RobotTask::runStep, this);
 
   // release
   COMP->mRobotMutex.release();
@@ -218,12 +174,20 @@ int RobotTask::on_execute()
 
 int RobotTask::on_exit()
 {
-  delete COMP->mWebotsRobot;
   return 0;
 }
 
-void RobotTask::runStep(webots::Robot *robot)
+void RobotTask::runStep()
 {
-  mWebotsShouldQuit = robot->step(webotsTimeStep) == -1.0;
+  mWebotsShouldQuit = COMP->_supervisor->step(webotsTimeStep) == -1.0;
   mThreadRunning = false;
+}
+
+void RobotTask::computeWebotsTimestep()
+{
+  // The WebotsTimestep is computed wrt the RobotTask
+  webotsTimeStep = COMP->_supervisor->getBasicTimeStep();
+  int coeff = 1000.0 / (webotsTimeStep * 
+    COMP->connections.robotTask.periodicActFreq);
+  webotsTimeStep *= coeff;
 }

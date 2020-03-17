@@ -17,6 +17,8 @@
 #include "BatteryEventTask.hh"
 #include "ComponentWebotsRobot.hh"
 #include "CommBasicObjects/CommBatteryLevel.hh"
+#include "CommBasicObjects/CommTimeStamp.hh"
+#include "webots/nodes.h"
 
 #include <iostream>
 
@@ -25,51 +27,165 @@ BatteryEventTask::BatteryEventTask(SmartACE::SmartComponent *comp)
 {
 	std::cout << "constructor BatteryEventTask\n";
 }
+
 BatteryEventTask::~BatteryEventTask() 
 {
+	for (auto m : motors)
+		delete m;
+	motors.clear();
 	std::cout << "destructor BatteryEventTask\n";
 }
 
-
-
 int BatteryEventTask::on_entry()
 {
-	battery_level = COMP->getGlobalState().getBattery_properties().getBattery_level_init();
+	computeWebotsTimestep();
+	COMP->battery_out = false;
+	custom_battery = COMP->getGlobalState().getBattery_properties().
+		getCustom_battery();
+	battery_level = COMP->getGlobalState().getBattery_properties().
+		getBattery_level_init();
+	battery_level_min = COMP->getGlobalState().getBattery_properties().
+		getBattery_level_min();
+	battery_level_max = COMP->getGlobalState().getBattery_properties().
+		getBattery_level_max();
+	motor_consumption = COMP->getGlobalState().getBattery_properties().
+		getMotor_consumption();
+	cpu_consumption = COMP->getGlobalState().getBattery_properties().
+		getCpu_consumption();
+
+	for (int i = 0; i < COMP->_supervisor->getNumberOfDevices(); i++)
+  	{
+		auto webotsDevice = COMP->_supervisor->getDeviceByIndex(i);
+		if (webotsDevice->getNodeType() == webots::Node::LINEAR_MOTOR ||
+			webotsDevice->getNodeType() == webots::Node::ROTATIONAL_MOTOR)
+			motors.push_back(dynamic_cast<webots::Motor*>(webotsDevice));
+	}
+
+	if (!custom_battery)
+		COMP->_supervisor->batterySensorEnable(webotsTimeStep);
+	else
+		getCharges();
+	
 	last_sample_time = std::chrono::system_clock::now();
 	return 0;
 }
+
 int BatteryEventTask::on_execute()
 {
 	COMP->mRobotMutex.acquire();
 
 	CommBasicObjects::CommBatteryLevel bt_level;
+	CommBasicObjects::CommTimeStamp timestamp;
+	
+	std::chrono::system_clock::time_point current_sample_time = 
+		std::chrono::system_clock::now();
+	
+	timestamp.set(timepointToTimeval(current_sample_time));
+	bt_level.setTimeStamp(timestamp);
 
-	auto current_sample_time = std::chrono::system_clock::now();
-	auto milliseconds = (double) std::chrono::duration_cast<std::chrono::milliseconds>(current_sample_time - last_sample_time).count();
+	auto milliseconds = (double) std::chrono::duration_cast
+		<std::chrono::milliseconds>(current_sample_time - last_sample_time).
+		count();
 	auto seconds = milliseconds / 1000.0;
 	last_sample_time = current_sample_time;
 
-	if(battery_level <= 0)
-	{
-		std::cout << "Battery Level is: " << battery_level << std::endl;
-		bt_level.setChargeLevel(0);
-	}
+	if(custom_battery)
+		computeCustomConsumption(seconds);
 	else
-	{
-		if(abs(COMP->mVX) > 0 || abs(COMP->mVY) > 0 || abs(COMP->mOmega) > 0)
-			battery_level = std::max(0.0, battery_level- seconds * COMP->getGlobalState().getBattery_properties().getMotor_consumption());
+		battery_level = COMP->_supervisor->batterySensorGetValue();
 
-		battery_level = std::max(0.0, battery_level- seconds * COMP->getGlobalState().getBattery_properties().getCpu_consumption());
-		std::cout << "Battery Level is: " << battery_level << std::endl;
-		bt_level.setChargeLevel((int)battery_level);
-	}
+	//std::cout << "Battery Level is: " << battery_level << std::endl;
+	bt_level.setChargeLevel((int)battery_level);
+	
 	COMP->batteryPushServiceOut->put(bt_level);
 	COMP->mRobotMutex.release();
 
 	return 0;
 }
+
 int BatteryEventTask::on_exit()
 {
 	// use this method to clean-up resources which are initialized in on_entry() and needs to be freed before the on_execute() can be called again
 	return 0;
+}
+
+timeval BatteryEventTask::timepointToTimeval(
+	std::chrono::system_clock::time_point tp) const
+{
+	auto secs = std::chrono::time_point_cast<std::chrono::seconds>(tp);
+    auto ms = std::chrono::time_point_cast<std::chrono::microseconds>(tp) -
+		std::chrono::time_point_cast<std::chrono::microseconds>(secs);
+    timeval t = timeval{secs.time_since_epoch().count(), 
+		ms.count()};
+	return t;
+}
+
+void BatteryEventTask::computeCustomConsumption(double seconds)
+{
+	double motor_energy = 0;
+	for (auto motor : motors)
+		motor_energy += abs(motor->getVelocity());
+
+	auto robot_position = getRobotPosition();
+	
+	for (auto charger : chargers)
+	{
+		if (checkChargerRange(robot_position, charger))
+			battery_level += charger->getField("battery")->getMFFloat(2) * 
+				seconds;
+	}
+
+	battery_level -= seconds * motor_energy * motor_consumption;
+	battery_level -= seconds * cpu_consumption;
+	battery_level = std::max(battery_level_min, battery_level);
+	battery_level = std::min(battery_level_max, battery_level);
+	if(battery_level <= 0.0)
+		COMP->battery_out = true;
+}
+
+void BatteryEventTask::getCharges()
+{
+	if (COMP->has_supervisor)
+	{
+		webots::Node* root = COMP->_supervisor->getRoot();
+		auto children = root->getField("children");
+		size_t number_of_nodes = children->getCount();
+		for (size_t i = 0; i < number_of_nodes; ++i) 
+		{
+			auto node = children->getMFNode(i);
+			if(node->getType()==WbNodeType::WB_NODE_CHARGER)
+				chargers.push_back(node);
+		}
+	}
+}
+
+std::array<double, 3> BatteryEventTask::getRobotPosition() const
+{
+	if (COMP->_gps)
+	{
+		auto GPS_value = COMP->_gps->getValues();
+		return {GPS_value[0], GPS_value[1], GPS_value[2]};
+	}
+	else
+		return {0, 0, 0};
+} 
+
+bool BatteryEventTask::checkChargerRange(
+	const std::array<double,3>& robot_position, webots::Node* charger) const
+{
+	auto charger_position = charger->getPosition();
+	const double x2 = pow(robot_position[0] - charger_position[0], 2);
+	const double y2 = pow(robot_position[1] - charger_position[1], 2);
+	auto radius = charger->getField("radius")->getSFFloat();
+	//std::cout << "distance: " << sqrt(x2 + y2) << "\n";
+	return (sqrt(x2 + y2) <= radius);
+}
+
+void BatteryEventTask::computeWebotsTimestep()
+{
+  // The WebotsTimestep is computed wrt the RobotTask
+  webotsTimeStep = COMP->_supervisor->getBasicTimeStep();
+  int coeff = 1000.0 / (webotsTimeStep * 
+    COMP->connections.batteryEventTask.periodicActFreq);
+  webotsTimeStep *= coeff;
 }

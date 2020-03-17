@@ -19,13 +19,34 @@
 
 #include "BatteryEventTaskCore.hh"
 
+#include "webots/Motor.hpp"
+#include "webots/Device.hpp"
+#include "webots/Node.hpp"
+#include <webots/GPS.hpp>
+
 #include <chrono>
 
 class BatteryEventTask  : public BatteryEventTaskCore
 {
 private:
 	double battery_level;
-	 std::chrono::time_point<std::chrono::system_clock> last_sample_time;
+	double battery_level_min;
+	double battery_level_max;
+	double motor_consumption;
+	double cpu_consumption;
+	bool custom_battery;
+	int webotsTimeStep;
+	std::chrono::time_point<std::chrono::system_clock> last_sample_time;
+	std::vector<webots::Motor*> motors;
+	std::vector<webots::Node*> chargers;
+
+	timeval timepointToTimeval(std::chrono::system_clock::time_point tp) const;
+	void computeCustomConsumption(double seconds);
+	void getCharges();
+	std::array<double,3> getRobotPosition() const;
+	bool checkChargerRange(const std::array<double, 3>& robot_position,
+		webots::Node* charger) const;
+	void computeWebotsTimestep();
 
 public:
 	BatteryEventTask(SmartACE::SmartComponent *comp);
