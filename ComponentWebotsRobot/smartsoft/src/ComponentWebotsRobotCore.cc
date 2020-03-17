@@ -19,7 +19,7 @@
 // constructor
 ComponentWebotsRobotCore::ComponentWebotsRobotCore()
 {
-  mWebotsRobot = NULL;
+  _supervisor = NULL;
 
   std::ifstream file_input("configuration.json");
   if (!file_input.is_open())
@@ -49,6 +49,51 @@ ComponentWebotsRobotCore::ComponentWebotsRobotCore()
   }
 
   // create Robot instance
-  mWebotsRobot = new webots::Robot();
+  _supervisor = make_shared<webots::Supervisor>();
+  checkSupervisor();
+  initDevices();
   battery_out = false;
+}
+
+ComponentWebotsRobotCore::~ComponentWebotsRobotCore()
+{
+  delete _gps;
+  delete _imu;
+}
+
+void ComponentWebotsRobotCore::checkSupervisor()
+{
+  auto root = _supervisor->getRoot();
+  if (!root)
+  {
+    has_supervisor = false;
+    return;
+  }
+  has_supervisor = true;
+}
+
+void ComponentWebotsRobotCore::initDevices()
+{
+  _gps = NULL;
+  _imu = NULL;
+
+  for (int i = 0; i < _supervisor->getNumberOfDevices(); i++)
+  {
+    auto webotsDevice = _supervisor->getDeviceByIndex(i);
+    if (webotsDevice->getNodeType() == webots::Node::GPS)
+    {
+      _gps = dynamic_cast<webots::GPS*>(webotsDevice);
+      std::cout << "Device #" << i << " called " << webotsDevice->getName() << 
+        " is a GPS." << std::endl;
+    }
+
+    else if (webotsDevice->getNodeType() == webots::Node::INERTIAL_UNIT)
+    {
+      _imu = dynamic_cast<webots::InertialUnit*>(webotsDevice);
+      std::cout << "Device #" << i << " called " << webotsDevice->getName() << 
+        " is an InertialUnit." << std::endl;
+    }
+    if (_gps && _imu)
+      break;
+  }
 }
