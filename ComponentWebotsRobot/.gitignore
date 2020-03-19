@@ -6,7 +6,6 @@
 # untracked files
 BatteryEventServiceOutEventTestHandler.*
 LocalizationUpdateHandler.*
-NavigationVelocityHandler.hh
 ParameterStateStruct.*
 
 
