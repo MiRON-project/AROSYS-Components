@@ -37,7 +37,6 @@ private:
 	bool custom_battery;
 	int webotsTimeStep;
 	std::chrono::time_point<std::chrono::system_clock> last_sample_time;
-	std::vector<webots::Motor*> motors;
 	std::vector<webots::Node*> chargers;
 
 	timeval timepointToTimeval(std::chrono::system_clock::time_point tp) const;

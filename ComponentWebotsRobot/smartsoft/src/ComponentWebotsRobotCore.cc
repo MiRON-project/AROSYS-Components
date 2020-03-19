@@ -52,6 +52,7 @@ ComponentWebotsRobotCore::ComponentWebotsRobotCore()
   _supervisor = make_shared<webots::Supervisor>();
   checkSupervisor();
   initDevices();
+  getNavigationMotors();
   battery_out = false;
 }
 
@@ -59,6 +60,9 @@ ComponentWebotsRobotCore::~ComponentWebotsRobotCore()
 {
   delete _gps;
   delete _imu;
+  for (auto m : motors)
+		delete m;
+	motors.clear();
 }
 
 void ComponentWebotsRobotCore::checkSupervisor()
@@ -76,24 +80,47 @@ void ComponentWebotsRobotCore::initDevices()
 {
   _gps = NULL;
   _imu = NULL;
+  motors.clear();
 
   for (int i = 0; i < _supervisor->getNumberOfDevices(); i++)
   {
     auto webotsDevice = _supervisor->getDeviceByIndex(i);
     if (webotsDevice->getNodeType() == webots::Node::GPS)
-    {
       _gps = dynamic_cast<webots::GPS*>(webotsDevice);
-      std::cout << "Device #" << i << " called " << webotsDevice->getName() << 
-        " is a GPS." << std::endl;
-    }
 
     else if (webotsDevice->getNodeType() == webots::Node::INERTIAL_UNIT)
-    {
       _imu = dynamic_cast<webots::InertialUnit*>(webotsDevice);
-      std::cout << "Device #" << i << " called " << webotsDevice->getName() << 
-        " is an InertialUnit." << std::endl;
+
+    else if (webotsDevice->getNodeType() == webots::Node::LINEAR_MOTOR ||
+			webotsDevice->getNodeType() == webots::Node::ROTATIONAL_MOTOR)
+			motors.push_back(dynamic_cast<webots::Motor*>(webotsDevice));
+  }
+}
+
+void ComponentWebotsRobotCore::getNavigationMotors()
+{
+  if (mConfiguration.isMember("navigationVelocity") && 
+    mConfiguration["navigationVelocity"].isObject())
+  {
+    const Json::Value velocityConfiguration = 
+      mConfiguration["navigationVelocity"];
+    const Json::Value::Members motorNames = 
+      velocityConfiguration.getMemberNames();
+    
+    for (int i = 0; i < motorNames.size(); ++i)
+    {
+      webots::Motor *motor = _supervisor->getMotor(motorNames[i]);
+      if (motor)
+      {
+        motor->setPosition(INFINITY);
+        motor->setVelocity(0);
+        navigation_motors[motorNames[i]] = motor;
+      }
     }
-    if (_gps && _imu)
-      break;
+  }
+  else
+  {
+    std::cerr << "Missing or invalid 'navigationVelocity' key in" << 
+      "'configuration.json' file." << std::endl;
   }
 }

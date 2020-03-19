@@ -29,6 +29,7 @@
 #include "webots/Device.hpp"
 #include "webots/GPS.hpp"
 #include "webots/InertialUnit.hpp"
+#include "webots/Motor.hpp"
 
 using namespace std;
 
@@ -37,6 +38,7 @@ class ComponentWebotsRobotCore
 private:
   void checkSupervisor();
   void initDevices();
+  void getNavigationMotors();
 
 public:
   ComponentWebotsRobotCore();
@@ -56,6 +58,10 @@ public:
   // webots devices
   webots::GPS* _gps;
   webots::InertialUnit* _imu;
+  std::vector<webots::Motor*> motors;
+  std::map<std::string, webots::Motor *> navigation_motors;
+
+
 };
 
 #endif

@@ -55,25 +55,6 @@ int RobotTask::on_entry()
   if (COMP->_imu)
     COMP->_imu->enable(webotsTimeStep);
 
-  // get the required motor for the navigation according to the configuration file
-  if (COMP->mConfiguration.isMember("navigationVelocity") && COMP->mConfiguration["navigationVelocity"].isObject())
-  {
-    const Json::Value velocityConfiguration = COMP->mConfiguration["navigationVelocity"];
-    const Json::Value::Members motorNames = velocityConfiguration.getMemberNames();
-    for (int i = 0; i < motorNames.size(); ++i)
-    {
-      webots::Motor *motor = COMP->_supervisor->getMotor(motorNames[i]);
-      if (motor)
-      {
-        motor->setPosition(INFINITY);
-        motor->setVelocity(0);
-        mWebotsNavigationMotors[motorNames[i]] = motor;
-      }
-    }
-  }
-  else
-    std::cerr << "Missing or invalid 'navigationVelocity' key in 'configuration.json' file." << std::endl;
-
   // release
   COMP->mRobotMutex.release();
 
@@ -92,11 +73,69 @@ int RobotTask::on_execute()
   double omega = 0.0;
   double leftSpeed = 0.0;
   double rightSpeed = 0.0;
+  
+  COMP->mRobotMutex.acquire();
+
+  CommBasicObjects::CommBaseState baseState = setBaseStateServiceOut();
+  baseStateServiceOutPut(baseState);
+
+  // Pass values to motors in Webots side
+  for (std::map<std::string, webots::Motor *>::iterator it = 
+        COMP->navigation_motors.begin();
+      it != COMP->navigation_motors.end(); ++it)
+  {
+    const std::string name = it->first;
+    const Json::Value coefficients = COMP->mConfiguration["navigationVelocity"][name];
+    if (!coefficients.isArray() || coefficients.size() != 3 || 
+        !coefficients[0].isDouble() || !coefficients[1].isDouble() ||
+        !coefficients[2].isDouble())
+    {
+      std::cerr << "Wrong value for the 'navigationVelocity." << name << 
+        "' key, the value should be a array of 3 doubles." << std::endl;
+      break;
+    }
+    webots::Motor *motor = it->second;
+    set_velocity_in_bound(motor, COMP->mVX * coefficients[0].asDouble() + 
+      COMP->mVY * coefficients[1].asDouble() + 
+      COMP->mOmega * coefficients[2].asDouble());
+  }
+
+  // start robot step thread
+  mThreadRunning = true;
+  if (mThread.joinable())
+    mThread.join();
+  mThread = std::thread(&RobotTask::runStep, this);
+
+  // release
+  COMP->mRobotMutex.release();
+
+  return 0;
+}
+
+int RobotTask::on_exit()
+{
+  return 0;
+}
+
+void RobotTask::runStep()
+{
+  mWebotsShouldQuit = COMP->_supervisor->step(webotsTimeStep) == -1.0;
+  mThreadRunning = false;
+}
+
+void RobotTask::computeWebotsTimestep()
+{
+  // The WebotsTimestep is computed wrt the RobotTask
+  webotsTimeStep = COMP->_supervisor->getBasicTimeStep();
+  int coeff = 1000.0 / (webotsTimeStep * 
+    COMP->connections.robotTask.periodicActFreq);
+  webotsTimeStep *= coeff;
+}
+
+CommBasicObjects::CommBaseState RobotTask::setBaseStateServiceOut() const
+{
   CommBasicObjects::CommBaseState baseState;
   CommBasicObjects::CommBasePose basePosition;
-
-  // acquisition
-  COMP->mRobotMutex.acquire();
 
   // set GPS values for port BaseStateServiceOut
   if (COMP->_gps)
@@ -135,59 +174,5 @@ int RobotTask::on_execute()
     basePosition.set_base_elevation(0.0);
     baseState.set_base_position(basePosition);
   }
-
-  // Pass values to motors in Webots side
-  for (std::map<std::string, webots::Motor *>::iterator it = 
-        mWebotsNavigationMotors.begin();
-      it != mWebotsNavigationMotors.end(); ++it)
-  {
-    const std::string name = it->first;
-    const Json::Value coefficients = COMP->mConfiguration["navigationVelocity"][name];
-    if (!coefficients.isArray() || coefficients.size() != 3 || 
-        !coefficients[0].isDouble() || !coefficients[1].isDouble() ||
-        !coefficients[2].isDouble())
-    {
-      std::cerr << "Wrong value for the 'navigationVelocity." << name << 
-        "' key, the value should be a array of 3 doubles." << std::endl;
-      break;
-    }
-    webots::Motor *motor = it->second;
-    set_velocity_in_bound(motor, COMP->mVX * coefficients[0].asDouble() + 
-      COMP->mVY * coefficients[1].asDouble() + 
-      COMP->mOmega * coefficients[2].asDouble());
-  }
-
-  // send baseState update to the port
-  baseStateServiceOutPut(baseState);
-
-  // start robot step thread
-  mThreadRunning = true;
-  if (mThread.joinable())
-    mThread.join();
-  mThread = std::thread(&RobotTask::runStep, this);
-
-  // release
-  COMP->mRobotMutex.release();
-
-  return 0;
-}
-
-int RobotTask::on_exit()
-{
-  return 0;
-}
-
-void RobotTask::runStep()
-{
-  mWebotsShouldQuit = COMP->_supervisor->step(webotsTimeStep) == -1.0;
-  mThreadRunning = false;
-}
-
-void RobotTask::computeWebotsTimestep()
-{
-  // The WebotsTimestep is computed wrt the RobotTask
-  webotsTimeStep = COMP->_supervisor->getBasicTimeStep();
-  int coeff = 1000.0 / (webotsTimeStep * 
-    COMP->connections.robotTask.periodicActFreq);
-  webotsTimeStep *= coeff;
+  return baseState;
 }

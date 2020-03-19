@@ -31,7 +31,6 @@
 class RobotTask : public RobotTaskCore
 {
 private:
-  std::map<std::string, webots::Motor *> mWebotsNavigationMotors;
 
   // threading stuff
   std::thread mThread;
@@ -39,6 +38,7 @@ private:
   bool mWebotsShouldQuit;
   void runStep();
   void computeWebotsTimestep();
+  CommBasicObjects::CommBaseState setBaseStateServiceOut() const;
   int webotsTimeStep;
 
 public:

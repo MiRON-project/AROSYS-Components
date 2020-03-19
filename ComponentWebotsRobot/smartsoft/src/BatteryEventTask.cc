@@ -30,16 +30,20 @@ BatteryEventTask::BatteryEventTask(SmartACE::SmartComponent *comp)
 
 BatteryEventTask::~BatteryEventTask() 
 {
-	for (auto m : motors)
-		delete m;
-	motors.clear();
 	std::cout << "destructor BatteryEventTask\n";
 }
 
 int BatteryEventTask::on_entry()
 {
+	if (!COMP->_supervisor)
+		return -1;
+
+  	COMP->mRobotMutex.acquire();	
+	
 	computeWebotsTimestep();
+	
 	COMP->battery_out = false;
+	
 	custom_battery = COMP->getGlobalState().getBattery_properties().
 		getCustom_battery();
 	battery_level = COMP->getGlobalState().getBattery_properties().
@@ -53,20 +57,15 @@ int BatteryEventTask::on_entry()
 	cpu_consumption = COMP->getGlobalState().getBattery_properties().
 		getCpu_consumption();
 
-	for (int i = 0; i < COMP->_supervisor->getNumberOfDevices(); i++)
-  	{
-		auto webotsDevice = COMP->_supervisor->getDeviceByIndex(i);
-		if (webotsDevice->getNodeType() == webots::Node::LINEAR_MOTOR ||
-			webotsDevice->getNodeType() == webots::Node::ROTATIONAL_MOTOR)
-			motors.push_back(dynamic_cast<webots::Motor*>(webotsDevice));
-	}
-
 	if (!custom_battery)
 		COMP->_supervisor->batterySensorEnable(webotsTimeStep);
 	else
 		getCharges();
 	
 	last_sample_time = std::chrono::system_clock::now();
+	
+	COMP->mRobotMutex.release();
+
 	return 0;
 }
 
@@ -123,7 +122,7 @@ timeval BatteryEventTask::timepointToTimeval(
 void BatteryEventTask::computeCustomConsumption(double seconds)
 {
 	double motor_energy = 0;
-	for (auto motor : motors)
+	for (auto motor : COMP->motors)
 		motor_energy += abs(motor->getVelocity());
 
 	auto robot_position = getRobotPosition();
