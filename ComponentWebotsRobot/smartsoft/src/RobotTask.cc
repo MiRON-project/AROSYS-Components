@@ -46,16 +46,13 @@ int RobotTask::on_entry()
   if (!COMP->_supervisor)
     return -1;
 
-  // acquisition
   COMP->mRobotMutex.acquire();
 
-  computeWebotsTimestep();
   if (COMP->_gps)
-    COMP->_gps->enable(webotsTimeStep);
+    COMP->_gps->enable(computeWebotsControlDuration());
   if (COMP->_imu)
-    COMP->_imu->enable(webotsTimeStep);
+    COMP->_imu->enable(computeWebotsControlDuration());
 
-  // release
   COMP->mRobotMutex.release();
 
   return 0;
@@ -119,17 +116,20 @@ int RobotTask::on_exit()
 
 void RobotTask::runStep()
 {
-  mWebotsShouldQuit = COMP->_supervisor->step(webotsTimeStep) == -1.0;
+  mWebotsShouldQuit = COMP->_supervisor->step(computeWebotsControlDuration()) 
+    == -1.0;
   mThreadRunning = false;
 }
 
-void RobotTask::computeWebotsTimestep()
+int RobotTask::computeWebotsControlDuration() const
 {
-  // The WebotsTimestep is computed wrt the RobotTask
-  webotsTimeStep = COMP->_supervisor->getBasicTimeStep();
-  int coeff = 1000.0 / (webotsTimeStep * 
-    COMP->connections.robotTask.periodicActFreq);
-  webotsTimeStep *= coeff;
+  double simulation_step = COMP->_supervisor->getBasicTimeStep();
+  double robot_control_step = 1000.0 / 
+    COMP->connections.robotTask.periodicActFreq;
+  int duration = (int) (
+    ceil(robot_control_step / simulation_step) * simulation_step);
+  std::cout << "Robot duration is: " << duration << "\n";
+  return duration;
 }
 
 CommBasicObjects::CommBaseState RobotTask::setBaseStateServiceOut() const

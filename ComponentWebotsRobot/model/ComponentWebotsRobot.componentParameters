@@ -19,4 +19,19 @@ ComponentParameter ComponentWebotsRobotParams component ComponentWebotsRobot
 		//@doc"Defines the motor consumption Factor"
 		motor_consumption: Double = 0.01
 	}
+	
+	InternalParameter lidar_properties{
+		//@doc"Enable the Lidar peripheral"
+		enable: Boolean=false
+	}
+	
+	InternalParameter camera_properties{
+		//@doc"Enable the Camera peripheral"
+		enable: Boolean=false
+		
+		//@doc"Enable the Camera recognition"
+		enable_recognition: Boolean=false
+	}
 }
+
+

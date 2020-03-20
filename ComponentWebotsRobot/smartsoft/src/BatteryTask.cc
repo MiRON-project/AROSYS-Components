@@ -14,7 +14,7 @@
 // If you want the toolchain to re-generate this file, please 
 // delete it before running the code generator.
 //--------------------------------------------------------------------------
-#include "BatteryEventTask.hh"
+#include "BatteryTask.hh"
 #include "ComponentWebotsRobot.hh"
 #include "CommBasicObjects/CommBatteryLevel.hh"
 #include "CommBasicObjects/CommTimeStamp.hh"
@@ -22,18 +22,19 @@
 
 #include <iostream>
 
-BatteryEventTask::BatteryEventTask(SmartACE::SmartComponent *comp) 
-:	BatteryEventTaskCore(comp)
+BatteryTask::BatteryTask(SmartACE::SmartComponent *comp) 
+:	BatteryTaskCore(comp)
 {
-	std::cout << "constructor BatteryEventTask\n";
+	std::cout << "constructor BatteryTask\n";
+}
+BatteryTask::~BatteryTask() 
+{
+	std::cout << "destructor BatteryTask\n";
 }
 
-BatteryEventTask::~BatteryEventTask() 
-{
-	std::cout << "destructor BatteryEventTask\n";
-}
 
-int BatteryEventTask::on_entry()
+
+int BatteryTask::on_entry()
 {
 	if (!COMP->_supervisor)
 		return -1;
@@ -68,8 +69,7 @@ int BatteryEventTask::on_entry()
 
 	return 0;
 }
-
-int BatteryEventTask::on_execute()
+int BatteryTask::on_execute()
 {
 	COMP->mRobotMutex.acquire();
 
@@ -101,14 +101,13 @@ int BatteryEventTask::on_execute()
 
 	return 0;
 }
-
-int BatteryEventTask::on_exit()
+int BatteryTask::on_exit()
 {
 	// use this method to clean-up resources which are initialized in on_entry() and needs to be freed before the on_execute() can be called again
 	return 0;
 }
 
-timeval BatteryEventTask::timepointToTimeval(
+timeval BatteryTask::timepointToTimeval(
 	std::chrono::system_clock::time_point tp) const
 {
 	auto secs = std::chrono::time_point_cast<std::chrono::seconds>(tp);
@@ -119,7 +118,7 @@ timeval BatteryEventTask::timepointToTimeval(
 	return t;
 }
 
-void BatteryEventTask::computeCustomConsumption(double seconds)
+void BatteryTask::computeCustomConsumption(double seconds)
 {
 	double motor_energy = 0;
 	for (auto motor : COMP->motors)
@@ -142,7 +141,7 @@ void BatteryEventTask::computeCustomConsumption(double seconds)
 		COMP->battery_out = true;
 }
 
-void BatteryEventTask::getCharges()
+void BatteryTask::getCharges()
 {
 	if (COMP->has_supervisor)
 	{
@@ -158,7 +157,7 @@ void BatteryEventTask::getCharges()
 	}
 }
 
-std::array<double, 3> BatteryEventTask::getRobotPosition() const
+std::array<double, 3> BatteryTask::getRobotPosition() const
 {
 	if (COMP->_gps)
 	{
@@ -169,7 +168,7 @@ std::array<double, 3> BatteryEventTask::getRobotPosition() const
 		return {0, 0, 0};
 } 
 
-bool BatteryEventTask::checkChargerRange(
+bool BatteryTask::checkChargerRange(
 	const std::array<double,3>& robot_position, webots::Node* charger) const
 {
 	auto charger_position = charger->getPosition();
@@ -180,11 +179,11 @@ bool BatteryEventTask::checkChargerRange(
 	return (sqrt(x2 + y2) <= radius);
 }
 
-void BatteryEventTask::computeWebotsTimestep()
+void BatteryTask::computeWebotsTimestep()
 {
   // The WebotsTimestep is computed wrt the RobotTask
   webotsTimeStep = COMP->_supervisor->getBasicTimeStep();
   int coeff = 1000.0 / (webotsTimeStep * 
-    COMP->connections.batteryEventTask.periodicActFreq);
+    COMP->connections.batteryTask.periodicActFreq);
   webotsTimeStep *= coeff;
 }
