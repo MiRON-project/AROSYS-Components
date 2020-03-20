@@ -126,23 +126,13 @@ void CameraTask::recognition()
 	CommObjectRecognitionObjects::CommObjectRecognitionObjectProperties 
 		obj_properties;
 	int number_of_objects = _camera->getRecognitionNumberOfObjects();
-	printf("\nRecognized %d objects.\n", number_of_objects);
+	// printf("\nRecognized %d objects.\n", number_of_objects);
 
 	auto objects = _camera->getRecognitionObjects();
 	for (int i = 0; i < number_of_objects; ++i) 
 	{
-		printf("Model of object %d: %s\n", i, objects[i].model);
 		obj_properties.setObject_type(objects[i].model);
-
-		printf("Id of object %d: %d\n", i, objects[i].id);
 		obj_properties.setObject_id(objects[i].id);
-
-		printf("Relative position of object %d: %lf %lf %lf\n", i, 
-			objects[i].position[0], objects[i].position[1], 
-			objects[i].position[2]);
-		printf("Relative orientation of object %d: %lf %lf %lf %lf\n", i, 
-			objects[i].orientation[0], objects[i].orientation[1],
-			objects[i].orientation[2], objects[i].orientation[3]);
 		Quaternion quat(objects[i].orientation[0], objects[i].orientation[1],
 			objects[i].orientation[2], objects[i].orientation[3]);
 		auto euler_angles = ToEulerAngles(quat);
@@ -150,12 +140,22 @@ void CameraTask::recognition()
 			objects[i].position[1], objects[i].position[2], euler_angles.yaw, 
 			euler_angles.pitch, euler_angles.roll);
 		obj_properties.setPose(obj_pose);
-		
-		printf("Size of object %d: %lf %lf\n", i, objects[i].size[0], 
-			objects[i].size[1]);
 		obj_properties.set_dimension(objects[i].size[0], objects[i].size[1], 
 			0);
-		
+		obj_properties.setIs_valid(true);
+		COMP->objectPushServiceOut->put(obj_properties);
+
+		/*
+		printf("Relative position of object %d: %lf %lf %lf\n", i, 
+			objects[i].position[0], objects[i].position[1], 
+			objects[i].position[2]);
+		printf("Relative orientation of object %d: %lf %lf %lf %lf\n", i, 
+			objects[i].orientation[0], objects[i].orientation[1],
+			objects[i].orientation[2], objects[i].orientation[3]);
+		printf("Size of object %d: %lf %lf\n", i, objects[i].size[0], 
+			objects[i].size[1]);
+		printf("Id of object %d: %d\n", i, objects[i].id);		
+		printf("Model of object %d: %s\n", i, objects[i].model);
 		printf("Position of the object %d on the camera image: %d %d\n", i, 
 			objects[i].position_on_image[0], objects[i].position_on_image[1]);
 		printf("Size of the object %d on the camera image: %d %d\n", i, 
@@ -164,7 +164,6 @@ void CameraTask::recognition()
 			printf("- Color %d/%d: %lf %lf %lf\n", j + 1, 
 				objects[i].number_of_colors, objects[i].colors[3 * j],
 				objects[i].colors[3 * j + 1], objects[i].colors[3 * j + 2]);
-		obj_properties.setIs_valid(true);
-		COMP->objectPushServiceOut->put(obj_properties);
+		*/
 	}
 }

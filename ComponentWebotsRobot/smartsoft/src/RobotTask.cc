@@ -22,7 +22,8 @@ RobotTask::RobotTask(SmartACE::SmartComponent *comp) :
   RobotTaskCore(comp),
   mThread(),
   mThreadRunning(false),
-  mWebotsShouldQuit(false)
+  mWebotsShouldQuit(false),
+  robot_duration(computeWebotsControlDuration())
 {
   std::cout << "constructor RobotTask\n";
 }
@@ -49,9 +50,9 @@ int RobotTask::on_entry()
   COMP->mRobotMutex.acquire();
 
   if (COMP->_gps)
-    COMP->_gps->enable(computeWebotsControlDuration());
+    COMP->_gps->enable(robot_duration);
   if (COMP->_imu)
-    COMP->_imu->enable(computeWebotsControlDuration());
+    COMP->_imu->enable(robot_duration);
 
   COMP->mRobotMutex.release();
 
@@ -116,7 +117,7 @@ int RobotTask::on_exit()
 
 void RobotTask::runStep()
 {
-  mWebotsShouldQuit = COMP->_supervisor->step(computeWebotsControlDuration()) 
+  mWebotsShouldQuit = COMP->_supervisor->step(robot_duration) 
     == -1.0;
   mThreadRunning = false;
 }

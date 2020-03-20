@@ -38,6 +38,7 @@ private:
   bool mWebotsShouldQuit;
   void runStep();
   int computeWebotsControlDuration() const;
+  int robot_duration;
   CommBasicObjects::CommBaseState setBaseStateServiceOut() const;
 
 public:
