@@ -36,8 +36,11 @@ private:
   std::thread mThread;
   bool mThreadRunning;
   bool mWebotsShouldQuit;
+  webots::Motor* left_wheel;
+  webots::Motor* right_wheel;
   void runStep();
   int computeWebotsControlDuration() const;
+  int robot_duration;
   CommBasicObjects::CommBaseState setBaseStateServiceOut() const;
 
 public:

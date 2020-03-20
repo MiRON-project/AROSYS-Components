@@ -18,27 +18,66 @@
 
 #include <iostream>
 
+void differentialWheelVelocityController(webots::Motor *left_wheel, 
+  webots::Motor *right_wheel, std::array<double, 2> vel)
+{
+  double speed = vel[0];
+  double omega = vel[1];
+  double max_vel = std::min(left_wheel->getMaxVelocity(), 
+    right_wheel->getMaxVelocity());
+  
+  double right_wheel_coef = (omega + 2 * speed) / (2 * max_vel);
+  double left_wheel_coef = (2 * speed - omega) / (2 * max_vel);
+
+  double left_wheel_vel = left_wheel_coef * max_vel;
+  double right_wheel_vel = right_wheel_coef * max_vel;
+  if (abs(left_wheel_vel) > max_vel)
+    left_wheel_vel = ((left_wheel_vel > 0) - (left_wheel_vel < 0)) * 
+      max_vel;
+  if (abs(right_wheel_vel) > max_vel)
+    right_wheel_vel = ((right_wheel_vel > 0) - (right_wheel_vel < 0)) * 
+      max_vel;
+  
+  left_wheel->setVelocity(left_wheel_vel);
+  right_wheel->setVelocity(right_wheel_vel);
+}
+
 RobotTask::RobotTask(SmartACE::SmartComponent *comp) :
   RobotTaskCore(comp),
   mThread(),
   mThreadRunning(false),
-  mWebotsShouldQuit(false)
+  mWebotsShouldQuit(false),
+  robot_duration(computeWebotsControlDuration()),
+  left_wheel(NULL),
+  right_wheel(NULL)
 {
+  for (std::map<std::string, webots::Motor *>::iterator it = 
+        COMP->navigation_motors.begin();
+      it != COMP->navigation_motors.end(); ++it)
+  {
+    const std::string name = it->first;
+    const Json::Value coefficients = COMP->mConfiguration["navigationVelocity"][name];
+    if (!coefficients.isArray() || coefficients.size() != 3 || 
+        !coefficients[0].isDouble() || !coefficients[1].isDouble() ||
+        !coefficients[2].isDouble())
+    {
+      std::cerr << "Wrong value for the 'navigationVelocity." << name << 
+        "' key, the value should be a array of 3 doubles." << std::endl;
+      break;
+    }
+
+    if (coefficients[2].asDouble() > 0)
+      right_wheel = it->second;
+    if (coefficients[2].asDouble() < 0)
+      left_wheel = it->second;
+  }
   std::cout << "constructor RobotTask\n";
 }
 RobotTask::~RobotTask()
 {
+  delete left_wheel;
+  delete right_wheel;
   std::cout << "destructor RobotTask\n";
-}
-
-void set_velocity_in_bound(webots::Motor *motor, double velocity)
-{
-  const double maxSpeed = motor->getMaxVelocity();
-  if (velocity > maxSpeed)
-    velocity = maxSpeed;
-  if (velocity < -maxSpeed)
-    velocity = -maxSpeed;
-  motor->setVelocity(velocity);
 }
 
 int RobotTask::on_entry()
@@ -49,9 +88,9 @@ int RobotTask::on_entry()
   COMP->mRobotMutex.acquire();
 
   if (COMP->_gps)
-    COMP->_gps->enable(computeWebotsControlDuration());
+    COMP->_gps->enable(robot_duration);
   if (COMP->_imu)
-    COMP->_imu->enable(computeWebotsControlDuration());
+    COMP->_imu->enable(robot_duration);
 
   COMP->mRobotMutex.release();
 
@@ -76,26 +115,10 @@ int RobotTask::on_execute()
   CommBasicObjects::CommBaseState baseState = setBaseStateServiceOut();
   baseStateServiceOutPut(baseState);
 
-  // Pass values to motors in Webots side
-  for (std::map<std::string, webots::Motor *>::iterator it = 
-        COMP->navigation_motors.begin();
-      it != COMP->navigation_motors.end(); ++it)
-  {
-    const std::string name = it->first;
-    const Json::Value coefficients = COMP->mConfiguration["navigationVelocity"][name];
-    if (!coefficients.isArray() || coefficients.size() != 3 || 
-        !coefficients[0].isDouble() || !coefficients[1].isDouble() ||
-        !coefficients[2].isDouble())
-    {
-      std::cerr << "Wrong value for the 'navigationVelocity." << name << 
-        "' key, the value should be a array of 3 doubles." << std::endl;
-      break;
-    }
-    webots::Motor *motor = it->second;
-    set_velocity_in_bound(motor, COMP->mVX * coefficients[0].asDouble() + 
-      COMP->mVY * coefficients[1].asDouble() + 
-      COMP->mOmega * coefficients[2].asDouble());
-  }
+  // Calculate wheel velocities using differential wheels
+  if (left_wheel && right_wheel)
+    differentialWheelVelocityController(left_wheel, right_wheel, 
+      {COMP->mVX, COMP->mOmega});
 
   // start robot step thread
   mThreadRunning = true;
@@ -116,7 +139,7 @@ int RobotTask::on_exit()
 
 void RobotTask::runStep()
 {
-  mWebotsShouldQuit = COMP->_supervisor->step(computeWebotsControlDuration()) 
+  mWebotsShouldQuit = COMP->_supervisor->step(robot_duration) 
     == -1.0;
   mThreadRunning = false;
 }
