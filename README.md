@@ -13,6 +13,11 @@ This component allows the user to use Webots simulator instead of Gazebo, Player
 
 ![ComponentWebots](ComponentWebots/model/ComponentWebotsComponentDefinition.jpg)
 
+### ComponentWebotsRobots
+
+This Component provides sensors raw data and it updates the robot controller. One must "Enable" the available sensor in component parameters. 
+![ComponentWebotsRobots](ComponentWebotsRobot/model/ComponentWebotsRobotComponentDefinition.jpg)
+
 ### ComponentWebotsBumper
 
 This component configures bumper's sensors in SmartSoft according to Webots prototype sensors and provides the bumper value.
