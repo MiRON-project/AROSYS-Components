@@ -14,10 +14,10 @@
 // If you want the toolchain to re-generate this file, please 
 // delete it before running the code generator.
 //--------------------------------------------------------------------------
-#ifndef _BATTERYEVENTTASK_HH
-#define _BATTERYEVENTTASK_HH
+#ifndef _BATTERYTASK_HH
+#define _BATTERYTASK_HH
 
-#include "BatteryEventTaskCore.hh"
+#include "BatteryTaskCore.hh"
 
 #include "webots/Motor.hpp"
 #include "webots/Device.hpp"
@@ -26,7 +26,7 @@
 
 #include <chrono>
 
-class BatteryEventTask  : public BatteryEventTaskCore
+class BatteryTask  : public BatteryTaskCore
 {
 private:
 	double battery_level;
@@ -46,10 +46,9 @@ private:
 	bool checkChargerRange(const std::array<double, 3>& robot_position,
 		webots::Node* charger) const;
 	void computeWebotsTimestep();
-
 public:
-	BatteryEventTask(SmartACE::SmartComponent *comp);
-	virtual ~BatteryEventTask();
+	BatteryTask(SmartACE::SmartComponent *comp);
+	virtual ~BatteryTask();
 	
 	virtual int on_entry();
 	virtual int on_execute();

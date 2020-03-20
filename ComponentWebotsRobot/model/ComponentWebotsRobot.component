@@ -1,32 +1,56 @@
 ComponentDefinition ComponentWebotsRobot logo "/ComponentWebotsRobot/model/logo.png"
 {
-  Activity BatteryEventTask {
+  Activity BatteryTask {
+  	DefaultTrigger PeriodicTimer 10.0 Hz
   }
+  
   Activity RobotTask {
     InputPortLink NavigationVelocityServiceIn {
       oversamplingOk undersamplingOk
     }
     DefaultTrigger PeriodicTimer 10.0 Hz
   }
+  
   InputPort LocalizationUpdateServiceIn implements CommNavigationObjects.LocalizationUpdateService {
   }
+  
   InputPort NavigationVelocityServiceIn implements CommNavigationObjects.NavigationVelocityService {
   }
+  
   InputHandler LocalizationUpdateHandler triggeredFrom LocalizationUpdateServiceIn {
   }
+  
   InputHandler NavigationVelocityHandler triggeredFrom NavigationVelocityServiceIn {
   }
+  
   OutputPort BaseStateServiceOut implements CommBasicObjects.BaseStateService realizedBy RobotTask {
   }
 
-	AnswerPort BaseStateAnswerer implements CommBasicObjects.BaseStateQueryService {
+  AnswerPort BaseStateAnswerer implements CommBasicObjects.BaseStateQueryService {
   }
+  
   RequestHandler BaseStateQueryHandler triggeredFrom BaseStateAnswerer {
   }
+  
   CoordinationSlavePort CoordinationPort implements CommBasicObjects.DefaultCoordinationService {
   }
 
   ComponentParameters ComponentWebotsRobotParams slave CoordinationPort;
-OutputPort BatteryPushServiceOut implements CommBasicObjects.BatteryPushService realizedBy BatteryEventTask {
+  
+  OutputPort BatteryPushServiceOut implements CommBasicObjects.BatteryPushService realizedBy BatteryTask {
 	}
+  
+  Activity LidarTask{
+	DefaultTrigger PeriodicTimer 10.0 Hz
+  }
+  OutputPort LaserServiceOut implements CommBasicObjects.LaserService realizedBy LidarTask {
+  }
+  
+  Activity CameraTask{
+		DefaultTrigger PeriodicTimer 10.0 Hz
+  }
+  OutputPort ObjectPushServiceOut implements CommObjectRecognitionObjects.ObjectPushService realizedBy CameraTask {
+  }
+  OutputPort RGBImagePushServiceOut implements DomainVision.RGBImagePushService realizedBy CameraTask {
+  }
 }

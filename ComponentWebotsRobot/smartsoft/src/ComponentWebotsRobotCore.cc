@@ -17,9 +17,12 @@
 #include <fstream>
 
 // constructor
-ComponentWebotsRobotCore::ComponentWebotsRobotCore()
+ComponentWebotsRobotCore::ComponentWebotsRobotCore() :
+  _supervisor(NULL),
+  _imu(NULL),
+  _gps(NULL)
 {
-  _supervisor = NULL;
+  
 
   std::ifstream file_input("configuration.json");
   if (!file_input.is_open())
@@ -63,6 +66,8 @@ ComponentWebotsRobotCore::~ComponentWebotsRobotCore()
   for (auto m : motors)
 		delete m;
 	motors.clear();
+  for (auto& m : navigation_motors)
+    delete m.second;
 }
 
 void ComponentWebotsRobotCore::checkSupervisor()

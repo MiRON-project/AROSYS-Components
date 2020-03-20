@@ -37,9 +37,8 @@ private:
   bool mThreadRunning;
   bool mWebotsShouldQuit;
   void runStep();
-  void computeWebotsTimestep();
+  int computeWebotsControlDuration() const;
   CommBasicObjects::CommBaseState setBaseStateServiceOut() const;
-  int webotsTimeStep;
 
 public:
   RobotTask(SmartACE::SmartComponent *comp);
