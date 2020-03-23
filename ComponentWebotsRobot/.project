@@ -5,8 +5,6 @@
 	<projects>
 		<project>CommBasicObjects</project>
 		<project>CommNavigationObjects</project>
-		<project>CommObjectRecognitionObjects</project>
-		<project>DomainVision</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

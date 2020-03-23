@@ -1,37 +1,3 @@
 ComponentParameter ComponentWebotsRobotParams component ComponentWebotsRobot
 {
-	InternalParameter battery_properties{
-		//@doc"Use custom battery estimation"
-		custom_battery: Boolean = true
-		
-		//@doc"Defines the initial battery level."
-		battery_level_init: Double = 100
-		
-		//@doc"Defines the max battery level."
-		battery_level_max: Double = 100
-		
-		//@doc"Defines the min battery level to stop robot."
-		battery_level_min: Double = 0
-		
-		//@doc"Defines the discharge battery rate."
-		cpu_consumption: Double = 0.1
-		
-		//@doc"Defines the motor consumption Factor"
-		motor_consumption: Double = 0.01
-	}
-	
-	InternalParameter lidar_properties{
-		//@doc"Enable the Lidar peripheral"
-		enable: Boolean=false
-	}
-	
-	InternalParameter camera_properties{
-		//@doc"Enable the Camera peripheral"
-		enable: Boolean=false
-		
-		//@doc"Enable the Camera recognition"
-		enable_recognition: Boolean=false
-	}
 }
-
-

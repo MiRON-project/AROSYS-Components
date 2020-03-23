@@ -17,12 +17,9 @@
 #include <fstream>
 
 // constructor
-ComponentWebotsRobotCore::ComponentWebotsRobotCore() :
-  _supervisor(NULL),
-  _imu(NULL),
-  _gps(NULL)
+ComponentWebotsRobotCore::ComponentWebotsRobotCore()
 {
-  
+  mWebotsRobot = NULL;
 
   std::ifstream file_input("configuration.json");
   if (!file_input.is_open())
@@ -52,80 +49,5 @@ ComponentWebotsRobotCore::ComponentWebotsRobotCore() :
   }
 
   // create Robot instance
-  _supervisor = make_shared<webots::Supervisor>();
-  checkSupervisor();
-  initDevices();
-  getNavigationMotors();
-  battery_out = false;
-}
-
-ComponentWebotsRobotCore::~ComponentWebotsRobotCore()
-{
-  delete _gps;
-  delete _imu;
-  for (auto m : motors)
-		delete m;
-	motors.clear();
-  for (auto& m : navigation_motors)
-    delete m.second;
-}
-
-void ComponentWebotsRobotCore::checkSupervisor()
-{
-  auto root = _supervisor->getRoot();
-  if (!root)
-  {
-    has_supervisor = false;
-    return;
-  }
-  has_supervisor = true;
-}
-
-void ComponentWebotsRobotCore::initDevices()
-{
-  _gps = NULL;
-  _imu = NULL;
-  motors.clear();
-
-  for (int i = 0; i < _supervisor->getNumberOfDevices(); i++)
-  {
-    auto webotsDevice = _supervisor->getDeviceByIndex(i);
-    if (webotsDevice->getNodeType() == webots::Node::GPS)
-      _gps = dynamic_cast<webots::GPS*>(webotsDevice);
-
-    else if (webotsDevice->getNodeType() == webots::Node::INERTIAL_UNIT)
-      _imu = dynamic_cast<webots::InertialUnit*>(webotsDevice);
-
-    else if (webotsDevice->getNodeType() == webots::Node::LINEAR_MOTOR ||
-			webotsDevice->getNodeType() == webots::Node::ROTATIONAL_MOTOR)
-			motors.push_back(dynamic_cast<webots::Motor*>(webotsDevice));
-  }
-}
-
-void ComponentWebotsRobotCore::getNavigationMotors()
-{
-  if (mConfiguration.isMember("navigationVelocity") && 
-    mConfiguration["navigationVelocity"].isObject())
-  {
-    const Json::Value velocityConfiguration = 
-      mConfiguration["navigationVelocity"];
-    const Json::Value::Members motorNames = 
-      velocityConfiguration.getMemberNames();
-    
-    for (int i = 0; i < motorNames.size(); ++i)
-    {
-      webots::Motor *motor = _supervisor->getMotor(motorNames[i]);
-      if (motor)
-      {
-        motor->setPosition(INFINITY);
-        motor->setVelocity(0);
-        navigation_motors[motorNames[i]] = motor;
-      }
-    }
-  }
-  else
-  {
-    std::cerr << "Missing or invalid 'navigationVelocity' key in" << 
-      "'configuration.json' file." << std::endl;
-  }
+  mWebotsRobot = new webots::Robot();
 }
