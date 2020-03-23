@@ -13,6 +13,18 @@ This component allows the user to use Webots simulator instead of Gazebo, Player
 
 ![ComponentWebots](ComponentWebots/model/ComponentWebotsComponentDefinition.jpg)
 
+### ComponentWebotsRobot
+
+This component configures a robot in Smartsoft, it provides basic functionality for navigation and localization.
+When used in a system, the name of the robot and its navigation properties should be defined in the `configuration.json` file in the `data` directory of the component.
+
+![ComponentWebotsRobot](ComponentWebotsRobot/model/ComponentWebotsRobotComponentDefinition.jpg)
+
+| Inputs  | outputs |
+| ------- | ------- |
+| **LocalizationUpdateServiceIn**: not implemented yet | **BatteryEventServiceOut**: not implemented yet |
+| **NavigationVelocityServiceIn**: velocity commands (linear velocities and turnrate) | **BaseStateServiceOut**: state of the robot base (position and orientation) |
+
 ### ComponentWebotsBumper
 
 This component configures bumper's sensors in SmartSoft according to Webots prototype sensors and provides the bumper value.
