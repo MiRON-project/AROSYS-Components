@@ -18,50 +18,22 @@
 #include "aceSmartSoft.hh"
 
 #include <iostream>
-#include <memory.h>
 
 #include <jsoncpp/json/json.h>
 
 #include <webots/Robot.hpp>
-#include "webots/Supervisor.hpp"
-#include "webots/Node.hpp"
-#include "webots/Field.hpp"
-#include "webots/Device.hpp"
-#include "webots/GPS.hpp"
-#include "webots/InertialUnit.hpp"
-#include "webots/Motor.hpp"
-
-using namespace std;
 
 class ComponentWebotsRobotCore
 {
 private:
-  void checkSupervisor();
-  void initDevices();
-  void getNavigationMotors();
-
 public:
   ComponentWebotsRobotCore();
-  ~ComponentWebotsRobotCore();
-
   SmartACE::SmartMutex mRobotMutex;
   double mVX;
   double mVY;
   double mOmega;
   Json::Value mConfiguration;
-  bool has_supervisor;
-  bool battery_out;
-
-  // Webots supervisor or Robot
-  shared_ptr<webots::Supervisor> _supervisor;
-
-  // webots devices
-  webots::GPS* _gps;
-  webots::InertialUnit* _imu;
-  std::vector<webots::Motor*> motors;
-  std::map<std::string, webots::Motor *> navigation_motors;
-
-
+  webots::Robot *mWebotsRobot;
 };
 
 #endif

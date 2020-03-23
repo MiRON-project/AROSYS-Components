@@ -31,17 +31,18 @@
 class RobotTask : public RobotTaskCore
 {
 private:
+  int webotsTimeStep;
+
+  // webots devices
+  webots::GPS *mWebotsGPS;
+  webots::InertialUnit *mWebotsInertialUnit;
+  std::map<std::string, webots::Motor *> mWebotsNavigationMotors;
 
   // threading stuff
   std::thread mThread;
   bool mThreadRunning;
   bool mWebotsShouldQuit;
-  webots::Motor* left_wheel;
-  webots::Motor* right_wheel;
-  void runStep();
-  int computeWebotsControlDuration() const;
-  int robot_duration;
-  CommBasicObjects::CommBaseState setBaseStateServiceOut() const;
+  void runStep(webots::Robot *robot);
 
 public:
   RobotTask(SmartACE::SmartComponent *comp);
