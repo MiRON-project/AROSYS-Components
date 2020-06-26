@@ -5,7 +5,4 @@ INCLUDE(${SMART_MACROS})
 INCLUDE_DIRECTORIES(${WEBOTS_HOME}/src)
 
 SMART_ADD_PACKAGE(ComponentWebots)
-SMART_ADD_PACKAGE(ComponentWebotsBumper)
-SMART_ADD_PACKAGE(ComponentWebotsLidar)
-SMART_ADD_PACKAGE(ComponentWebotsRobot)
 
